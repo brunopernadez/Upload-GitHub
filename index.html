@@ -1,678 +1,302 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GITZIP // Omni Payload Uploader</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- JSZip Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <style>
-        /* Cyberpunk/Hacker Theme Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #050505; border-left: 1px solid #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 0px; }
-        ::-webkit-scrollbar-thumb:hover { background: #059669; }
-        
-        /* Matrix-like glow effects */
-        .glow-border:focus-within {
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
-            border-color: #10b981;
-        }
-        
-        /* Input autofill fix for dark theme */
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover, 
-        input:-webkit-autofill:focus, 
-        input:-webkit-autofill:active{
-            -webkit-box-shadow: 0 0 0 30px #0a0a0a inset !important;
-            -webkit-text-fill-color: #10b981 !important;
-            transition: background-color 5000s ease-in-out 0s;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Git Upload Console</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root { color-scheme: dark; }
+    body { background: radial-gradient(circle at top, #1f2937 0%, #0b1220 42%, #050912 100%); }
+    .glass { background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(12px); }
+  </style>
 </head>
-<body class="bg-[#050505] text-gray-300 font-sans min-h-screen p-4 sm:p-6 lg:p-8 flex items-start justify-center">
-
-    <div class="w-full max-w-3xl bg-[#0a0a0a] border border-[#1f2937] shadow-[0_0_30px_rgba(16,185,129,0.05)] rounded-xl overflow-hidden relative">
-        
-        <!-- Top decorative bar -->
-        <div class="h-1 w-full bg-gradient-to-r from-transparent via-[#10b981] to-transparent opacity-50"></div>
-
-        <!-- Header & Lang Toggle -->
-        <div class="p-6 sm:px-8 sm:pt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#1f2937]">
-            <div class="flex items-center gap-3">
-                <div class="p-2 bg-[#10b981]/10 rounded border border-[#10b981]/30 text-[#10b981]">
-                    <i data-lucide="terminal-square" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold text-white tracking-wider font-mono">GITZIP<span class="text-[#10b981]">_OMNI</span></h1>
-                    <p class="text-xs text-gray-500 font-mono mt-0.5" data-i18n="subtitle">Push file, folder, & zip payload to GitHub</p>
-                </div>
-            </div>
-
-            <!-- Language Toggle -->
-            <div class="flex bg-[#111] border border-[#1f2937] rounded-md p-1 font-mono text-xs">
-                <button type="button" id="btnEn" class="px-3 py-1.5 rounded text-gray-500 hover:text-white transition-colors" onclick="setLanguage('en')">EN/US</button>
-                <button type="button" id="btnId" class="px-3 py-1.5 rounded bg-[#1f2937] text-[#10b981] shadow-sm transition-colors" onclick="setLanguage('id')">ID</button>
-            </div>
+<body class="text-slate-200 min-h-screen p-4 sm:p-6">
+  <div class="mx-auto max-w-5xl space-y-6">
+    <header class="glass border border-slate-700/70 rounded-2xl p-6 shadow-2xl shadow-slate-950/40">
+      <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-300">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M3 12h18"/></svg>
+            <span data-i18n="badge">GitHub Uploader</span>
+          </div>
+          <h1 class="mt-3 text-2xl sm:text-3xl font-semibold text-white">Upload file, folder, atau ZIP ke GitHub</h1>
+          <p class="mt-2 text-sm text-slate-400" data-i18n="subtitle">UI modern untuk deploy di Vercel, tanpa gaya AI/chat.</p>
         </div>
-
-        <div class="p-6 sm:p-8 space-y-8">
-            
-            <!-- Instructions Panel -->
-            <div class="bg-[#111] border-l-2 border-[#10b981] p-5 rounded text-sm text-gray-400 font-mono relative overflow-hidden group">
-                <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <i data-lucide="shield-alert" class="w-24 h-24 text-[#10b981]"></i>
-                </div>
-                <h3 class="text-[#10b981] font-bold mb-3 flex items-center gap-2">
-                    <i data-lucide="cpu" class="w-4 h-4"></i>
-                    <span data-i18n="inst_title">SYSTEM_INSTRUCTIONS</span>
-                </h3>
-                <ol class="list-decimal pl-5 space-y-2 marker:text-[#10b981]">
-                    <li data-i18n="inst_1">Generate a <strong>Personal Access Token (PAT)</strong>.</li>
-                    <li>
-                        <span data-i18n="inst_2">Go to:</span> 
-                        <a href="https://github.com/settings/tokens" target="_blank" class="text-blue-400 hover:text-blue-300 underline underline-offset-2 break-all transition-colors">https://github.com/settings/tokens</a>
-                    </li>
-                    <li data-i18n="inst_3">Click <strong>Generate new token (classic)</strong>.</li>
-                    <li data-i18n="inst_4">Check the <strong>"repo"</strong> scope (Full control of private repositories).</li>
-                    <li data-i18n="inst_5">Copy the token (starts with <code>ghp_...</code>) and paste it below.</li>
-                </ol>
-            </div>
-
-            <form id="uploadForm" class="space-y-6">
-                
-                <!-- Section 1: Target Vector (Credentials) -->
-                <div>
-                    <h2 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 font-mono flex items-center gap-2">
-                        <span class="w-4 h-[1px] bg-gray-600"></span>
-                        <span data-i18n="sec_1_title">01 // TARGET_VECTOR</span>
-                        <span class="flex-grow h-[1px] bg-gray-800"></span>
-                    </h2>
-                    
-                    <div class="space-y-4">
-                        <div class="glow-border transition-all">
-                            <label class="block text-xs font-mono text-gray-400 mb-1 ml-1" data-i18n="lbl_token">Access Token [PAT]</label>
-                            <input type="password" id="pat" required placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 
-                                class="w-full bg-[#0a0a0a] border border-[#1f2937] text-[#10b981] px-4 py-2.5 rounded text-sm font-mono outline-none placeholder-gray-700">
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="glow-border transition-all">
-                                <label class="block text-xs font-mono text-gray-400 mb-1 ml-1" data-i18n="lbl_owner">Repo Owner/Username</label>
-                                <input type="text" id="owner" required placeholder="e.g. root-user" 
-                                    class="w-full bg-[#0a0a0a] border border-[#1f2937] text-[#10b981] px-4 py-2.5 rounded text-sm font-mono outline-none placeholder-gray-700">
-                            </div>
-                            <div class="glow-border transition-all">
-                                <label class="block text-xs font-mono text-gray-400 mb-1 ml-1" data-i18n="lbl_repo">Repository Name</label>
-                                <input type="text" id="repo" required placeholder="e.g. exploit-db" 
-                                    class="w-full bg-[#0a0a0a] border border-[#1f2937] text-[#10b981] px-4 py-2.5 rounded text-sm font-mono outline-none placeholder-gray-700">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="glow-border transition-all">
-                                <label class="block text-xs font-mono text-gray-400 mb-1 ml-1" data-i18n="lbl_branch">Branch</label>
-                                <input type="text" id="branch" required value="main" placeholder="main" 
-                                    class="w-full bg-[#0a0a0a] border border-[#1f2937] text-[#10b981] px-4 py-2.5 rounded text-sm font-mono outline-none placeholder-gray-700">
-                            </div>
-                            <div class="glow-border transition-all">
-                                <label class="block text-xs font-mono text-gray-400 mb-1 ml-1" data-i18n="lbl_path">Target Directory (Optional)</label>
-                                <input type="text" id="targetFolder" placeholder="e.g. /public/assets/" 
-                                    class="w-full bg-[#0a0a0a] border border-[#1f2937] text-[#10b981] px-4 py-2.5 rounded text-sm font-mono outline-none placeholder-gray-700">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 2: Payload (Files/Folders/Zip) -->
-                <div>
-                    <h2 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 font-mono flex items-center gap-2">
-                        <span class="w-4 h-[1px] bg-gray-600"></span>
-                        <span data-i18n="sec_2_title">02 // PAYLOAD_DATA</span>
-                        <span class="flex-grow h-[1px] bg-gray-800"></span>
-                    </h2>
-                    
-                    <div class="space-y-4">
-                        <div class="glow-border transition-all">
-                            <label class="block text-xs font-mono text-gray-400 mb-1 ml-1" data-i18n="lbl_commit">Commit Message</label>
-                            <input type="text" id="commitMsg" required value="Inject payload via Omni Uploader" 
-                                class="w-full bg-[#0a0a0a] border border-[#1f2937] text-[#10b981] px-4 py-2.5 rounded text-sm font-mono outline-none placeholder-gray-700">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-mono text-gray-400 mb-2 ml-1" data-i18n="lbl_inject">Add Payload Data</label>
-                            
-                            <!-- 3 Buttons for File / Folder / Zip -->
-                            <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-3">
-                                <label class="flex flex-col items-center justify-center py-4 border border-[#1f2937] rounded bg-[#111] hover:bg-[#10b981]/10 hover:border-[#10b981]/50 cursor-pointer transition-all group text-center">
-                                    <input type="file" multiple class="hidden" id="fileInput">
-                                    <i data-lucide="files" class="w-6 h-6 text-gray-500 group-hover:text-[#10b981] mb-2 transition-colors"></i>
-                                    <span class="text-xs font-mono text-gray-400 group-hover:text-[#10b981] transition-colors" data-i18n="btn_files">+ FILES</span>
-                                </label>
-                                
-                                <label class="flex flex-col items-center justify-center py-4 border border-[#1f2937] rounded bg-[#111] hover:bg-[#10b981]/10 hover:border-[#10b981]/50 cursor-pointer transition-all group text-center">
-                                    <!-- webkitdirectory triggers folder selection -->
-                                    <input type="file" webkitdirectory directory multiple class="hidden" id="folderInput">
-                                    <i data-lucide="folder-open" class="w-6 h-6 text-gray-500 group-hover:text-[#10b981] mb-2 transition-colors"></i>
-                                    <span class="text-xs font-mono text-gray-400 group-hover:text-[#10b981] transition-colors" data-i18n="btn_folder">+ FOLDER</span>
-                                </label>
-                                
-                                <label class="flex flex-col items-center justify-center py-4 border border-[#1f2937] rounded bg-[#111] hover:bg-[#10b981]/10 hover:border-[#10b981]/50 cursor-pointer transition-all group text-center">
-                                    <input type="file" accept=".zip,application/zip" class="hidden" id="zipInput">
-                                    <i data-lucide="file-archive" class="w-6 h-6 text-gray-500 group-hover:text-[#10b981] mb-2 transition-colors"></i>
-                                    <span class="text-xs font-mono text-gray-400 group-hover:text-[#10b981] transition-colors" data-i18n="btn_zip">+ .ZIP</span>
-                                </label>
-                            </div>
-
-                            <!-- Selected Payload List -->
-                            <div class="border border-[#1f2937] bg-[#0a0a0a] rounded p-3">
-                                <div class="flex justify-between items-center mb-2 font-mono border-b border-[#1f2937] pb-2">
-                                    <p class="text-xs text-gray-400"><span data-i18n="preview_title">Payload Queue:</span> <span id="fileCount" class="text-white font-bold">0</span></p>
-                                    <button type="button" id="clearPayloadBtn" class="text-[10px] text-gray-500 hover:text-red-400 uppercase tracking-wider transition-colors" data-i18n="btn_clear_payload">[ CLEAR QUEUE ]</button>
-                                </div>
-                                
-                                <div id="emptyPayloadMsg" class="text-xs text-gray-600 font-mono text-center py-4 italic" data-i18n="msg_empty">
-                                    No payload loaded. Select files/folders/zip above.
-                                </div>
-                                
-                                <div id="fileList" class="max-h-40 overflow-y-auto text-xs text-gray-500 font-mono space-y-1 hidden">
-                                    <!-- Files injected here -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Submit Action -->
-                <button type="submit" id="submitBtn" disabled 
-                    class="w-full bg-[#10b981] text-black hover:bg-[#059669] font-bold py-3.5 px-4 rounded flex justify-center items-center transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-[#10b981] uppercase tracking-wider text-sm font-mono mt-4">
-                    <i data-lucide="terminal" class="w-4 h-4 mr-2"></i>
-                    <span id="btnText" data-i18n="btn_submit">INITIATE_UPLOAD</span>
-                    <i data-lucide="loader" id="btnLoader" class="w-4 h-4 ml-2 animate-spin hidden"></i>
-                </button>
-            </form>
-
-            <!-- Terminal Area -->
-            <div id="logContainer" class="mt-8 border border-[#1f2937] rounded overflow-hidden bg-[#050505]">
-                <div class="bg-[#0a0a0a] px-4 py-2 flex items-center justify-between border-b border-[#1f2937]">
-                    <span class="text-xs font-mono text-gray-400 flex items-center">
-                        <i data-lucide="activity" class="w-3 h-3 mr-2 text-[#10b981]"></i> 
-                        <span data-i18n="term_title">TERMINAL_OUTPUT</span>
-                    </span>
-                    <button type="button" id="clearLogBtn" class="text-[10px] font-mono uppercase text-gray-600 hover:text-[#10b981] transition-colors" data-i18n="term_clear">[ CLEAR ]</button>
-                </div>
-                <div id="logArea" class="p-4 h-48 overflow-y-auto font-mono text-xs space-y-1.5 break-all">
-                    <div class="text-gray-600">root@gitzip:~# <span data-i18n="term_idle">waiting for input...</span></div>
-                </div>
-            </div>
-
+        <div class="inline-flex rounded-xl border border-slate-700 bg-slate-900/80 p-1 text-sm">
+          <button id="btnId" onclick="setLanguage('id')" class="rounded-lg px-4 py-2">ID</button>
+          <button id="btnEn" onclick="setLanguage('en')" class="rounded-lg px-4 py-2">EN</button>
         </div>
-    </div>
+      </div>
+    </header>
 
-    <script>
-        // Init Icons
-        lucide.createIcons();
+    <main class="grid gap-6 lg:grid-cols-3">
+      <section class="glass border border-slate-700/70 rounded-2xl p-6 lg:col-span-2 space-y-5">
+        <h2 class="text-lg font-semibold text-white" data-i18n="config">Konfigurasi Target</h2>
+        <form id="uploadForm" class="space-y-4">
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <label class="mb-1.5 block text-sm text-slate-300" data-i18n="token">GitHub Personal Access Token</label>
+              <input id="pat" type="password" required placeholder="ghp_xxxxxxxxxxxxxxxxx" class="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-cyan-400" />
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm text-slate-300">Owner</label>
+              <input id="owner" required placeholder="username atau org" class="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-cyan-400" />
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm text-slate-300">Repository</label>
+              <input id="repo" required placeholder="nama-repo" class="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-cyan-400" />
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm text-slate-300" data-i18n="branch">Branch</label>
+              <input id="branch" value="main" class="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-cyan-400" />
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm text-slate-300" data-i18n="folder">Folder tujuan (opsional)</label>
+              <input id="targetFolder" placeholder="misal: assets/releases" class="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-cyan-400" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="mb-1.5 block text-sm text-slate-300" data-i18n="message">Commit message</label>
+              <input id="commitMsg" value="chore: upload files from web console" class="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-cyan-400" />
+            </div>
+          </div>
 
-        // --- I18N / Translation System ---
-        const translations = {
-            en: {
-                subtitle: "Push files, folders, & zip payload to GitHub",
-                inst_title: "SYSTEM_INSTRUCTIONS",
-                inst_1: "Generate a <strong>Personal Access Token (PAT)</strong>.",
-                inst_2: "Go to:",
-                inst_3: "Click <strong>Generate new token (classic)</strong>.",
-                inst_4: "Check the <strong>\"repo\"</strong> scope (Full control of private repositories).",
-                inst_5: "Copy the token (starts with <code>ghp_...</code>) and paste it below.",
-                sec_1_title: "01 // TARGET_VECTOR",
-                lbl_token: "Access Token [PAT]",
-                lbl_owner: "Repo Owner/Username",
-                lbl_repo: "Repository Name",
-                lbl_branch: "Branch",
-                lbl_path: "Target Directory (Optional)",
-                sec_2_title: "02 // PAYLOAD_DATA",
-                lbl_commit: "Commit Message",
-                lbl_inject: "Add Payload Data",
-                btn_files: "+ FILES",
-                btn_folder: "+ FOLDER",
-                btn_zip: "+ .ZIP",
-                preview_title: "Payload Queue:",
-                btn_clear_payload: "[ CLEAR QUEUE ]",
-                msg_empty: "No payload loaded. Select files, folder, or zip above.",
-                btn_submit: "INITIATE_UPLOAD",
-                term_title: "TERMINAL_OUTPUT",
-                term_clear: "[ CLEAR ]",
-                term_idle: "waiting for input...",
-                err_zip: "Please select a valid .zip file!",
-                err_read: "Failed to read zip. File might be corrupted.",
-                err_empty: "No files found to upload!",
-                log_start: "Initializing connection to ",
-                log_branch: "Fetching branch ref...",
-                log_tree: "Fetching base tree...",
-                log_empty_repo: "Empty repository detected. Initiating initial commit...",
-                log_new_branch: "Branch not found. Creating a new branch...",
-                log_extract: "Encoding and uploading blobs...",
-                log_err: "Error on file ",
-                log_prog: "Progress: ",
-                log_newtree: "Constructing new directory tree...",
-                log_commit: "Signing commit...",
-                log_update: "Updating branch HEAD...",
-                log_create_ref: "Creating new branch reference...",
-                log_success: "PAYLOAD DELIVERED SUCCESSFULLY."
-            },
-            id: {
-                subtitle: "Unggah file, folder, & payload zip ke GitHub",
-                inst_title: "INSTRUKSI_SISTEM",
-                inst_1: "Buat <strong>Personal Access Token (PAT)</strong> dari GitHub.",
-                inst_2: "Kunjungi:",
-                inst_3: "Klik <strong>Generate new token (classic)</strong>.",
-                inst_4: "Beri centang pada akses <strong>\"repo\"</strong> (Akses penuh ke repositori).",
-                inst_5: "Salin token (berawalan <code>ghp_...</code>) dan tempel di bawah ini.",
-                sec_1_title: "01 // TARGET_KREDENSIAL",
-                lbl_token: "Token Akses [PAT]",
-                lbl_owner: "Username/Owner Repo",
-                lbl_repo: "Nama Repository",
-                lbl_branch: "Cabang (Branch)",
-                lbl_path: "Target Direktori (Opsional)",
-                sec_2_title: "02 // DATA_FILE",
-                lbl_commit: "Pesan Commit",
-                lbl_inject: "Tambahkan Data Payload",
-                btn_files: "+ FILE",
-                btn_folder: "+ FOLDER",
-                btn_zip: "+ .ZIP",
-                preview_title: "Antrean Payload:",
-                btn_clear_payload: "[ BERSIHKAN ANTREAN ]",
-                msg_empty: "Antrean kosong. Silakan tambahkan file/folder/zip.",
-                btn_submit: "MULAI_UNGGAH",
-                term_title: "OUTPUT_TERMINAL",
-                term_clear: "[ BERSIHKAN ]",
-                term_idle: "menunggu perintah...",
-                err_zip: "Harap pilih file berekstensi .zip!",
-                err_read: "Gagal membaca zip. File mungkin rusak.",
-                err_empty: "Tidak ada file yang siap diunggah!",
-                log_start: "Memulai koneksi ke ",
-                log_branch: "Mengambil referensi cabang...",
-                log_tree: "Mengambil struktur dasar...",
-                log_empty_repo: "Repository kosong terdeteksi. Memulai initial commit...",
-                log_new_branch: "Branch tidak ditemukan. Membuat branch baru...",
-                log_extract: "Mengenkripsi dan mengirim blob...",
-                log_err: "Error pada file ",
-                log_prog: "Progres: ",
-                log_newtree: "Membangun struktur direktori baru...",
-                log_commit: "Menandatangani commit final...",
-                log_update: "Memperbarui kepala (HEAD) cabang...",
-                log_create_ref: "Membuat referensi branch baru...",
-                log_success: "PAYLOAD BERHASIL DIKIRIM."
-            }
-        };
+          <div class="rounded-xl border border-dashed border-slate-600 p-4">
+            <p class="text-sm text-slate-300 mb-3" data-i18n="pick">Pilih payload upload</p>
+            <div class="flex flex-wrap gap-3">
+              <label class="cursor-pointer rounded-xl border border-slate-600 px-4 py-2.5 text-sm hover:border-cyan-400 hover:text-cyan-300 transition">
+                <input id="fileInput" type="file" class="hidden" multiple />
+                <span data-i18n="pick_file">Tambah file</span>
+              </label>
+              <label class="cursor-pointer rounded-xl border border-slate-600 px-4 py-2.5 text-sm hover:border-cyan-400 hover:text-cyan-300 transition">
+                <input id="folderInput" type="file" class="hidden" webkitdirectory directory multiple />
+                <span data-i18n="pick_folder">Tambah folder</span>
+              </label>
+              <label class="cursor-pointer rounded-xl border border-slate-600 px-4 py-2.5 text-sm hover:border-cyan-400 hover:text-cyan-300 transition">
+                <input id="zipInput" type="file" class="hidden" accept=".zip" />
+                <span data-i18n="pick_zip">Tambah ZIP</span>
+              </label>
+            </div>
+          </div>
 
-        let currentLang = 'id';
+          <div id="queue" class="rounded-xl border border-slate-700 bg-slate-950/40 p-4 text-sm text-slate-300"></div>
 
-        function setLanguage(lang) {
-            currentLang = lang;
-            
-            const btnEn = document.getElementById('btnEn');
-            const btnId = document.getElementById('btnId');
-            
-            if (lang === 'en') {
-                btnEn.className = "px-3 py-1.5 rounded bg-[#1f2937] text-[#10b981] shadow-sm transition-colors";
-                btnId.className = "px-3 py-1.5 rounded text-gray-500 hover:text-white transition-colors";
-            } else {
-                btnId.className = "px-3 py-1.5 rounded bg-[#1f2937] text-[#10b981] shadow-sm transition-colors";
-                btnEn.className = "px-3 py-1.5 rounded text-gray-500 hover:text-white transition-colors";
-            }
+          <button id="submitBtn" type="submit" class="w-full rounded-xl bg-cyan-500 px-4 py-3 font-medium text-slate-900 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400">
+            <span id="btnText" data-i18n="upload">Upload ke GitHub</span>
+          </button>
+        </form>
+      </section>
 
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (translations[lang][key]) {
-                    el.innerHTML = translations[lang][key];
-                }
-            });
+      <aside class="glass border border-slate-700/70 rounded-2xl p-6 space-y-4">
+        <h3 class="text-lg font-semibold text-white" data-i18n="guide">Panduan Singkat</h3>
+        <ol class="space-y-2 text-sm text-slate-300 list-decimal pl-5">
+          <li data-i18n="g1">Buat GitHub PAT dengan scope <strong>repo</strong>.</li>
+          <li data-i18n="g2">Isi owner, repo, branch, dan commit message.</li>
+          <li data-i18n="g3">Pilih file/folder/ZIP lalu klik upload.</li>
+          <li data-i18n="g4">Pantau proses di panel log.</li>
+        </ol>
+        <div class="rounded-xl border border-slate-700 bg-slate-950/50 p-4">
+          <h4 class="text-sm font-medium text-white mb-2" data-i18n="log">Log Aktivitas</h4>
+          <pre id="log" class="h-[330px] overflow-auto text-xs text-slate-300 whitespace-pre-wrap"></pre>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const payloadQueue = [];
+    let currentLang = 'id';
+
+    const el = {
+      btnId: document.getElementById('btnId'),
+      btnEn: document.getElementById('btnEn'),
+      fileInput: document.getElementById('fileInput'),
+      folderInput: document.getElementById('folderInput'),
+      zipInput: document.getElementById('zipInput'),
+      uploadForm: document.getElementById('uploadForm'),
+      submitBtn: document.getElementById('submitBtn'),
+      log: document.getElementById('log'),
+      queue: document.getElementById('queue'),
+      pat: document.getElementById('pat'),
+      owner: document.getElementById('owner'),
+      repo: document.getElementById('repo'),
+      branch: document.getElementById('branch'),
+      targetFolder: document.getElementById('targetFolder'),
+      commitMsg: document.getElementById('commitMsg')
+    };
+
+    const t = {
+      id: {
+        badge: 'GitHub Uploader', subtitle: 'UI modern untuk deploy di Vercel, tanpa gaya AI/chat.', config: 'Konfigurasi Target',
+        token: 'GitHub Personal Access Token', branch: 'Branch', folder: 'Folder tujuan (opsional)', message: 'Commit message',
+        pick: 'Pilih payload upload', pick_file: 'Tambah file', pick_folder: 'Tambah folder', pick_zip: 'Tambah ZIP',
+        upload: 'Upload ke GitHub', guide: 'Panduan Singkat', g1: 'Buat GitHub PAT dengan scope repo.', g2: 'Isi owner, repo, branch, dan commit message.', g3: 'Pilih file/folder/ZIP lalu klik upload.', g4: 'Pantau proses di panel log.',
+        log: 'Log Aktivitas', empty: 'Belum ada file dalam antrean.', total: 'Total item', extracting: 'Mengekstrak ZIP', ready: 'siap',
+        start: 'Memulai upload...', done: 'Upload selesai.', failed: 'Upload gagal'
+      },
+      en: {
+        badge: 'GitHub Uploader', subtitle: 'Modern UI for Vercel deployment, not AI/chat style.', config: 'Target Configuration',
+        token: 'GitHub Personal Access Token', branch: 'Branch', folder: 'Target folder (optional)', message: 'Commit message',
+        pick: 'Select upload payload', pick_file: 'Add files', pick_folder: 'Add folder', pick_zip: 'Add ZIP',
+        upload: 'Upload to GitHub', guide: 'Quick Guide', g1: 'Create GitHub PAT with repo scope.', g2: 'Fill owner, repo, branch, and commit message.', g3: 'Choose file/folder/ZIP then click upload.', g4: 'Monitor progress in logs.',
+        log: 'Activity Log', empty: 'No file queued yet.', total: 'Total items', extracting: 'Extracting ZIP', ready: 'ready',
+        start: 'Starting upload...', done: 'Upload completed.', failed: 'Upload failed'
+      }
+    };
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t[lang][el.dataset.i18n] || el.textContent);
+      el.btnId.className = `rounded-lg px-4 py-2 ${lang === 'id' ? 'bg-cyan-500 text-slate-900' : 'text-slate-300'}`;
+      el.btnEn.className = `rounded-lg px-4 py-2 ${lang === 'en' ? 'bg-cyan-500 text-slate-900' : 'text-slate-300'}`;
+      updateQueue();
+    }
+
+    function log(msg, type = 'info') {
+      const colors = { info: 'text-slate-200', success: 'text-emerald-300', warn: 'text-amber-300', error: 'text-rose-300' };
+      const line = document.createElement('div');
+      line.className = colors[type] || colors.info;
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      const panel = el.log;
+      panel.appendChild(line);
+      panel.scrollTop = panel.scrollHeight;
+    }
+
+    function updateQueue() {
+      const queue = el.queue;
+      if (!payloadQueue.length) {
+        queue.textContent = t[currentLang].empty;
+        return;
+      }
+      queue.innerHTML = `<div class="mb-2 text-slate-200">${t[currentLang].total}: ${payloadQueue.length}</div>` +
+        payloadQueue.map(x => `<div class="py-1 border-b border-slate-800/80 last:border-b-0">${x.path}</div>`).join('');
+    }
+
+    function normalizeFolder(path) {
+      if (!path) return '';
+      const clean = path.trim().replace(/^\/+|\/+$/g, '');
+      return clean ? `${clean}/` : '';
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result.split(',')[1]);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    el.fileInput.addEventListener('change', (e) => {
+      [...e.target.files].forEach(file => payloadQueue.push({ type: 'file', path: file.name, data: file }));
+      updateQueue();
+      e.target.value = '';
+    });
+
+    el.folderInput.addEventListener('change', (e) => {
+      [...e.target.files].forEach(file => payloadQueue.push({ type: 'file', path: file.webkitRelativePath || file.name, data: file }));
+      updateQueue();
+      e.target.value = '';
+    });
+
+    el.zipInput.addEventListener('change', async (e) => {
+      const zipFile = e.target.files[0];
+      if (!zipFile) return;
+      log(`${t[currentLang].extracting}: ${zipFile.name}`);
+      const zip = await JSZip.loadAsync(zipFile);
+      const tasks = [];
+      zip.forEach((relativePath, entry) => {
+        if (!entry.dir) tasks.push(entry.async('blob').then(blob => payloadQueue.push({ type: 'file', path: relativePath, data: new File([blob], relativePath) })));
+      });
+      await Promise.all(tasks);
+      log(`${zipFile.name} ${t[currentLang].ready}`, 'success');
+      updateQueue();
+      e.target.value = '';
+    });
+
+    el.uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!payloadQueue.length) return log(t[currentLang].empty, 'warn');
+
+      const patValue = el.pat.value.trim();
+      const ownerValue = el.owner.value.trim();
+      const repoValue = el.repo.value.trim();
+      const branchValue = el.branch.value.trim() || 'main';
+      const folder = normalizeFolder(el.targetFolder.value);
+      const commitMessage = el.commitMsg.value.trim() || 'chore: upload from web console';
+
+      const headers = { Authorization: `token ${patValue}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' };
+      const baseUrl = `https://api.github.com/repos/${ownerValue}/${repoValue}`;
+
+      el.submitBtn.disabled = true;
+      log(t[currentLang].start);
+
+      try {
+        let latestCommitSha = null;
+        let baseTreeSha = null;
+        let isInitialCommit = false;
+
+        const refRes = await fetch(`${baseUrl}/git/refs/heads/${branchValue}`, { headers });
+        if (refRes.status === 404) {
+          isInitialCommit = true;
+        } else if (!refRes.ok) {
+          throw new Error(`Failed to read branch: ${refRes.status}`);
+        } else {
+          const refData = await refRes.json();
+          latestCommitSha = refData.object.sha;
+          const commitRes = await fetch(`${baseUrl}/git/commits/${latestCommitSha}`, { headers });
+          if (!commitRes.ok) throw new Error('Failed to read latest commit');
+          const commitData = await commitRes.json();
+          baseTreeSha = commitData.tree.sha;
         }
 
-        // --- Core Logic ---
-        const form = document.getElementById('uploadForm');
-        
-        // Inputs
-        const fileInput = document.getElementById('fileInput');
-        const folderInput = document.getElementById('folderInput');
-        const zipInput = document.getElementById('zipInput');
-        
-        // UI Elements
-        const fileList = document.getElementById('fileList');
-        const fileCountDisplay = document.getElementById('fileCount');
-        const emptyPayloadMsg = document.getElementById('emptyPayloadMsg');
-        const clearPayloadBtn = document.getElementById('clearPayloadBtn');
-        const submitBtn = document.getElementById('submitBtn');
-        const btnText = document.getElementById('btnText');
-        const btnLoader = document.getElementById('btnLoader');
-        const logArea = document.getElementById('logArea');
-        const clearLogBtn = document.getElementById('clearLogBtn');
-
-        // Master Array to hold all accumulated files
-        // Format: { path: string, type: 'file'|'zip', data: File|JSZipObject }
-        let payloadQueue = [];
-
-        // Terminal Log Function
-        function log(message, type = 'info') {
-            const p = document.createElement('div');
-            const time = new Date().toLocaleTimeString('en-US', {hour12: false});
-            
-            let colorClass = 'text-gray-400';
-            let prefix = 'root@gitzip:~#';
-            
-            if (type === 'error') colorClass = 'text-red-500';
-            if (type === 'success') colorClass = 'text-[#10b981] font-bold';
-            if (type === 'system') colorClass = 'text-blue-400';
-            if (type === 'warn') colorClass = 'text-yellow-500';
-            
-            p.innerHTML = `<span class="text-gray-600 mr-2">[${time}]</span> <span class="text-gray-600 mr-2">${prefix}</span> <span class="${colorClass}">${message}</span>`;
-            logArea.appendChild(p);
-            logArea.scrollTop = logArea.scrollHeight;
+        const tree = [];
+        for (const item of payloadQueue) {
+          const content = await fileToBase64(item.data);
+          const blobRes = await fetch(`${baseUrl}/git/blobs`, { method: 'POST', headers, body: JSON.stringify({ content, encoding: 'base64' }) });
+          if (!blobRes.ok) throw new Error(`Blob failed: ${item.path}`);
+          const blobData = await blobRes.json();
+          tree.push({ path: `${folder}${item.path}`.replace(/^\//, ''), mode: '100644', type: 'blob', sha: blobData.sha });
         }
 
-        clearLogBtn.addEventListener('click', () => {
-            logArea.innerHTML = `<div class="text-gray-600">root@gitzip:~# <span data-i18n="term_idle">${translations[currentLang].term_idle}</span></div>`;
+        const treeRes = await fetch(`${baseUrl}/git/trees`, { method: 'POST', headers, body: JSON.stringify({ tree, ...(baseTreeSha ? { base_tree: baseTreeSha } : {}) }) });
+        if (!treeRes.ok) throw new Error('Failed to create tree');
+        const treeData = await treeRes.json();
+
+        const commitRes = await fetch(`${baseUrl}/git/commits`, {
+          method: 'POST', headers,
+          body: JSON.stringify({ message: commitMessage, tree: treeData.sha, ...(latestCommitSha ? { parents: [latestCommitSha] } : {}) })
         });
+        if (!commitRes.ok) throw new Error('Failed to create commit');
+        const newCommit = await commitRes.json();
 
-        // Update the UI list based on payloadQueue array
-        function updatePayloadUI() {
-            fileList.innerHTML = '';
-            fileCountDisplay.textContent = payloadQueue.length;
-            
-            if (payloadQueue.length === 0) {
-                emptyPayloadMsg.classList.remove('hidden');
-                fileList.classList.add('hidden');
-                submitBtn.disabled = true;
-            } else {
-                emptyPayloadMsg.classList.add('hidden');
-                fileList.classList.remove('hidden');
-                submitBtn.disabled = false;
-                
-                // Show up to 100 items to prevent lag
-                const displayLimit = Math.min(payloadQueue.length, 100);
-                for (let i = 0; i < displayLimit; i++) {
-                    const item = payloadQueue[i];
-                    const el = document.createElement('div');
-                    el.className = 'flex items-center gap-2 py-0.5 border-b border-[#1f2937]/50 truncate';
-                    
-                    let icon = '📄';
-                    if (item.type === 'zip') icon = '🗜️';
-                    
-                    el.innerHTML = `<span class="text-[#10b981]">${icon}</span> <span title="${item.path}">${item.path}</span>`;
-                    fileList.appendChild(el);
-                }
-
-                if (payloadQueue.length > 100) {
-                    const el = document.createElement('div');
-                    el.className = 'text-gray-600 italic pt-1';
-                    el.textContent = `... +${payloadQueue.length - 100} files hidden`;
-                    fileList.appendChild(el);
-                }
-            }
+        if (isInitialCommit) {
+          const createRef = await fetch(`${baseUrl}/git/refs`, {
+            method: 'POST', headers,
+            body: JSON.stringify({ ref: `refs/heads/${branchValue}`, sha: newCommit.sha })
+          });
+          if (!createRef.ok) throw new Error('Failed to create branch reference');
+        } else {
+          const updateRef = await fetch(`${baseUrl}/git/refs/heads/${branchValue}`, {
+            method: 'PATCH', headers,
+            body: JSON.stringify({ sha: newCommit.sha, force: false })
+          });
+          if (!updateRef.ok) throw new Error('Failed to update branch reference');
         }
 
-        // Clear payload queue
-        clearPayloadBtn.addEventListener('click', () => {
-            payloadQueue = [];
-            fileInput.value = '';
-            folderInput.value = '';
-            zipInput.value = '';
-            updatePayloadUI();
-        });
+        payloadQueue.length = 0;
+        updateQueue();
+        log(t[currentLang].done, 'success');
+      } catch (err) {
+        log(`${t[currentLang].failed}: ${err.message}`, 'error');
+      } finally {
+        el.submitBtn.disabled = false;
+      }
+    });
 
-        // 1. Handle Multiple Files Selection
-        fileInput.addEventListener('change', (e) => {
-            const files = e.target.files;
-            for (let i = 0; i < files.length; i++) {
-                payloadQueue.push({
-                    path: files[i].name, // Just the filename
-                    type: 'file',
-                    data: files[i]
-                });
-            }
-            updatePayloadUI();
-            fileInput.value = ''; // Reset input so same file can be selected again if needed
-        });
-
-        // 2. Handle Folder Selection
-        folderInput.addEventListener('change', (e) => {
-            const files = e.target.files;
-            for (let i = 0; i < files.length; i++) {
-                // webkitRelativePath contains the full path including the folder name
-                payloadQueue.push({
-                    path: files[i].webkitRelativePath || files[i].name,
-                    type: 'file',
-                    data: files[i]
-                });
-            }
-            updatePayloadUI();
-            folderInput.value = '';
-        });
-
-        // 3. Handle Zip Selection
-        zipInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            if (!file.name.toLowerCase().endsWith('.zip')) {
-                alert(translations[currentLang].err_zip);
-                zipInput.value = '';
-                return;
-            }
-            
-            submitBtn.disabled = true;
-            btnText.textContent = 'EXTRACTING ZIP...';
-            
-            try {
-                const zip = new JSZip();
-                const zipContent = await zip.loadAsync(file);
-                
-                zipContent.forEach((relativePath, zipEntry) => {
-                    if (!zipEntry.dir) {
-                        payloadQueue.push({ 
-                            path: relativePath, 
-                            type: 'zip', 
-                            data: zipEntry 
-                        });
-                    }
-                });
-
-                updatePayloadUI();
-            } catch (error) {
-                log(translations[currentLang].err_read, 'error');
-            } finally {
-                zipInput.value = '';
-                btnText.textContent = translations[currentLang].btn_submit;
-                if (payloadQueue.length > 0) submitBtn.disabled = false;
-            }
-        });
-
-        // Helper: Convert JS File Object to Base64 String
-        const fileToBase64 = (file) => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    // Extract base64 part from data URL (e.g. "data:image/png;base64,iVBORw0KGgo...")
-                    const base64String = reader.result.split(',')[1];
-                    resolve(base64String);
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        };
-
-        // Main Upload Logic
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            if (payloadQueue.length === 0) {
-                log(translations[currentLang].err_empty, 'error');
-                return;
-            }
-
-            const pat = document.getElementById('pat').value.trim();
-            const owner = document.getElementById('owner').value.trim();
-            const repo = document.getElementById('repo').value.trim();
-            const branch = document.getElementById('branch').value.trim();
-            let targetFolder = document.getElementById('targetFolder').value.trim();
-            const commitMsg = document.getElementById('commitMsg').value.trim();
-
-            if (targetFolder && !targetFolder.endsWith('/')) targetFolder += '/';
-            if (targetFolder.startsWith('/')) targetFolder = targetFolder.substring(1);
-
-            submitBtn.disabled = true;
-            btnText.textContent = 'EXECUTING...';
-            btnLoader.classList.remove('hidden');
-            
-            const apiUrl = `https://api.github.com/repos/${owner}/${repo}`;
-            const headers = {
-                'Authorization': `Bearer ${pat}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            };
-
-            try {
-                log(`${translations[currentLang].log_start} ${owner}/${repo} [${branch}]...`, 'system');
-                log(translations[currentLang].log_branch);
-                
-                let isInitialCommit = false;
-                let latestCommitSha = null;
-                let baseTreeSha = null;
-
-                const refRes = await fetch(`${apiUrl}/git/refs/heads/${branch}`, { headers });
-                
-                // Handle Error 409 (Empty Repo) / 404 (Branch Missing)
-                if (refRes.status === 409) {
-                    isInitialCommit = true;
-                    log(translations[currentLang].log_empty_repo, 'warn');
-                } else if (refRes.status === 404) {
-                    isInitialCommit = true;
-                    log(translations[currentLang].log_new_branch, 'warn');
-                } else if (!refRes.ok) {
-                    throw new Error(`Fetch branch failed: ${refRes.status} ${refRes.statusText}`);
-                } else {
-                    const refData = await refRes.json();
-                    latestCommitSha = refData.object.sha;
-
-                    log(translations[currentLang].log_tree);
-                    const commitRes = await fetch(`${apiUrl}/git/commits/${latestCommitSha}`, { headers });
-                    if (!commitRes.ok) throw new Error('Fetch base commit failed.');
-                    const commitData = await commitRes.json();
-                    baseTreeSha = commitData.tree.sha;
-                }
-
-                // Upload Blobs (Files)
-                log(translations[currentLang].log_extract, 'system');
-                const treeData = [];
-                const batchSize = 10; 
-                
-                for (let i = 0; i < payloadQueue.length; i += batchSize) {
-                    const batch = payloadQueue.slice(i, i + batchSize);
-                    
-                    const batchPromises = batch.map(async (item) => {
-                        try {
-                            // Extract base64 based on source type
-                            const base64Content = item.type === 'zip' 
-                                ? await item.data.async('base64') 
-                                : await fileToBase64(item.data);
-                                
-                            const blobRes = await fetch(`${apiUrl}/git/blobs`, {
-                                method: 'POST',
-                                headers,
-                                body: JSON.stringify({ content: base64Content, encoding: 'base64' })
-                            });
-                            
-                            if (!blobRes.ok) throw new Error(`Blob upload failed: ${item.path}`);
-                            const blobData = await blobRes.json();
-                            const finalFilePath = targetFolder + item.path;
-
-                            return { path: finalFilePath, mode: '100644', type: 'blob', sha: blobData.sha };
-                        } catch (err) {
-                            log(`${translations[currentLang].log_err}${item.path}: ${err.message}`, 'error');
-                            throw err; 
-                        }
-                    });
-
-                    const batchResults = await Promise.all(batchPromises);
-                    treeData.push(...batchResults);
-                    
-                    log(`${translations[currentLang].log_prog}${Math.min(i + batchSize, payloadQueue.length)} / ${payloadQueue.length}`);
-                }
-
-                // Create Tree
-                log(translations[currentLang].log_newtree, 'system');
-                const treePayload = { tree: treeData };
-                if (!isInitialCommit && baseTreeSha) {
-                    treePayload.base_tree = baseTreeSha;
-                }
-                const newTreeRes = await fetch(`${apiUrl}/git/trees`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify(treePayload)
-                });
-                if (!newTreeRes.ok) throw new Error('Create tree failed.');
-                const newTreeData = await newTreeRes.json();
-
-                // Create Commit
-                log(translations[currentLang].log_commit, 'system');
-                const commitPayload = {
-                    message: commitMsg,
-                    tree: newTreeData.sha
-                };
-                if (!isInitialCommit && latestCommitSha) {
-                    commitPayload.parents = [latestCommitSha];
-                }
-                const newCommitRes = await fetch(`${apiUrl}/git/commits`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify(commitPayload)
-                });
-                if (!newCommitRes.ok) throw new Error('Create commit failed.');
-                const newCommitData = await newCommitRes.json();
-
-                // Update / Create Reference
-                if (isInitialCommit) {
-                    log(translations[currentLang].log_create_ref, 'system');
-                    const createRefRes = await fetch(`${apiUrl}/git/refs`, {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify({
-                            ref: `refs/heads/${branch}`,
-                            sha: newCommitData.sha
-                        })
-                    });
-                    if (!createRefRes.ok) throw new Error('Create new branch ref failed.');
-                } else {
-                    log(translations[currentLang].log_update, 'system');
-                    const updateRefRes = await fetch(`${apiUrl}/git/refs/heads/${branch}`, {
-                        method: 'PATCH',
-                        headers,
-                        body: JSON.stringify({ sha: newCommitData.sha, force: false })
-                    });
-                    if (!updateRefRes.ok) throw new Error('Update branch ref failed.');
-                }
-
-                log(translations[currentLang].log_success, 'success');
-                
-                // Clear queue on success
-                payloadQueue = [];
-                updatePayloadUI();
-                
-            } catch (error) {
-                log(`[FATAL] ${error.message}`, 'error');
-            } finally {
-                if (payloadQueue.length > 0) submitBtn.disabled = false;
-                btnText.textContent = translations[currentLang].btn_submit;
-                btnLoader.classList.add('hidden');
-            }
-        });
-
-        // Initialize language
-        setLanguage('id');
-    </script>
+    setLanguage('id');
+    updateQueue();
+  </script>
 </body>
 </html>
